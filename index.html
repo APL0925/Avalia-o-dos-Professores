@@ -41,12 +41,12 @@
     <div id="comments"></div>
 
     <script>
-        const criador = "Admin"; // Defina aqui seu nome de criador
-        
         document.getElementById("identificado").addEventListener("change", function() {
             document.getElementById("nome").style.display = this.checked ? "block" : "none";
         });
-        
+
+        const CRIADOR_SITE = "Admin"; // Defina o nome do criador do site aqui
+
         function adicionarComentario() {
             let professor = document.getElementById("professor").value;
             let identificado = document.getElementById("identificado").checked;
@@ -57,11 +57,12 @@
                 alert("Por favor, escreva um comentário.");
                 return;
             }
-            
+
             let comentarios = JSON.parse(localStorage.getItem("comentarios")) || [];
-            comentarios.push({ professor, nome, comentario });
+            let id = new Date().getTime(); // Gera um ID único para cada comentário
+            comentarios.push({ id, professor, nome, comentario });
             localStorage.setItem("comentarios", JSON.stringify(comentarios));
-            
+
             document.getElementById("comentario").value = "";
             carregarComentarios();
         }
@@ -71,27 +72,27 @@
             commentsDiv.innerHTML = "";
             let comentarios = JSON.parse(localStorage.getItem("comentarios")) || [];
             
-            comentarios.forEach((c, index) => {
+            comentarios.forEach(c => {
                 let div = document.createElement("div");
                 div.className = "comment-box";
                 div.innerHTML = `<strong>${c.professor} - ${c.nome}</strong><br>${c.comentario}`;
-                
-                let btn = document.createElement("button");
-                btn.className = "delete-btn";
-                btn.innerText = "Excluir";
-                btn.onclick = function() { excluirComentario(index); };
-                
-                if (c.nome === criador || c.nome === document.getElementById("nome").value) {
-                    div.appendChild(btn);
-                }
-                
+
+                let botaoExcluir = document.createElement("button");
+                botaoExcluir.className = "delete-btn";
+                botaoExcluir.innerText = "Excluir";
+                botaoExcluir.onclick = function() { excluirComentario(c.id); };
+
+                div.appendChild(botaoExcluir);
                 commentsDiv.appendChild(div);
             });
         }
 
-        function excluirComentario(index) {
+        function excluirComentario(id) {
             let comentarios = JSON.parse(localStorage.getItem("comentarios")) || [];
-            comentarios.splice(index, 1);
+            let usuarioAtual = prompt("Digite seu nome para confirmar a exclusão:");
+
+            comentarios = comentarios.filter(c => c.id !== id && (c.nome === usuarioAtual || usuarioAtual === CRIADOR_SITE));
+
             localStorage.setItem("comentarios", JSON.stringify(comentarios));
             carregarComentarios();
         }
