@@ -39,44 +39,72 @@
     <h2>Comentários:</h2>
     <div id="comments"></div>
 
-    <script>
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, push, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        // 🔥 Configuração do Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyD675uBrd8UEsN1bIhHBKN1Htxbax2sT1Q",
+            authDomain: "professores-b452a.firebaseapp.com",
+            databaseURL: "https://professores-b452a-default-rtdb.firebaseio.com",
+            projectId: "professores-b452a",
+            storageBucket: "professores-b452a.firebasestorage.app",
+            messagingSenderId: "929951612798",
+            appId: "1:929951612798:web:759854c18b22d1eed8fd2f",
+            measurementId: "G-BEV2N47QQQ"
+        };
+
+        // Inicializa o Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // Exibir ou ocultar o campo de nome
         document.getElementById("identificado").addEventListener("change", function() {
             document.getElementById("nome").style.display = this.checked ? "block" : "none";
         });
-        
+
         function adicionarComentario() {
             let professor = document.getElementById("professor").value;
             let identificado = document.getElementById("identificado").checked;
             let nome = identificado ? document.getElementById("nome").value : "Anônimo";
             let comentario = document.getElementById("comentario").value;
-            
+
             if (comentario.trim() === "") {
                 alert("Por favor, escreva um comentário.");
                 return;
             }
-            
-            let comentarios = JSON.parse(localStorage.getItem("comentarios")) || [];
-            comentarios.push({ professor, nome, comentario });
-            localStorage.setItem("comentarios", JSON.stringify(comentarios));
-            
+
+            // Salvar no Firebase
+            const comentariosRef = ref(db, "comentarios/");
+            push(comentariosRef, { professor, nome, comentario });
+
             document.getElementById("comentario").value = "";
-            carregarComentarios();
+            alert("Comentário enviado!");
         }
 
         function carregarComentarios() {
             let commentsDiv = document.getElementById("comments");
             commentsDiv.innerHTML = "";
-            let comentarios = JSON.parse(localStorage.getItem("comentarios")) || [];
-            
-            comentarios.forEach(c => {
-                let div = document.createElement("div");
-                div.className = "comment-box";
-                div.innerHTML = `<strong>${c.professor} - ${c.nome}</strong><br>${c.comentario}`;
-                commentsDiv.appendChild(div);
+
+            // Buscar do Firebase
+            const comentariosRef = ref(db, "comentarios/");
+            onValue(comentariosRef, (snapshot) => {
+                commentsDiv.innerHTML = "";
+                snapshot.forEach((childSnapshot) => {
+                    const c = childSnapshot.val();
+                    let div = document.createElement("div");
+                    div.className = "comment-box";
+                    div.innerHTML = `<strong>${c.professor} - ${c.nome}</strong><br>${c.comentario}`;
+                    commentsDiv.appendChild(div);
+                });
             });
         }
 
         window.onload = carregarComentarios;
     </script>
+
 </body>
 </html>
+
