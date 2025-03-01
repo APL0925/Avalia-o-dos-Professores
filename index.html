@@ -41,8 +41,8 @@
     <div id="comments"></div>
 
     <script>
-        const criador = "MeuNomeDeUsuario"; // Defina seu nome de usuário aqui
-
+        const criador = "Admin"; // Defina aqui seu nome de criador
+        
         document.getElementById("identificado").addEventListener("change", function() {
             document.getElementById("nome").style.display = this.checked ? "block" : "none";
         });
@@ -78,27 +78,24 @@
                 
                 let btn = document.createElement("button");
                 btn.className = "delete-btn";
-                btn.innerText = "X";
-                btn.onclick = function() {
-                    if (c.nome === "Anônimo" || c.nome === criador || c.nome === document.getElementById("nome").value) {
-                        deletarComentario(index);
-                    } else {
-                        alert("Você só pode apagar seus próprios comentários!");
-                    }
-                };
+                btn.innerText = "Excluir";
+                btn.onclick = function() { excluirComentario(index); };
                 
-                div.appendChild(btn);
+                if (c.nome === criador || c.nome === document.getElementById("nome").value) {
+                    div.appendChild(btn);
+                }
+                
                 commentsDiv.appendChild(div);
             });
         }
-        
-        function deletarComentario(index) {
+
+        function excluirComentario(index) {
             let comentarios = JSON.parse(localStorage.getItem("comentarios")) || [];
             comentarios.splice(index, 1);
             localStorage.setItem("comentarios", JSON.stringify(comentarios));
             carregarComentarios();
         }
-        
+
         window.onload = carregarComentarios;
     </script>
 </body>
