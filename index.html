@@ -44,6 +44,8 @@
     <div id="comments"></div>
 
     <script>
+        console.log("Script carregado!");
+
         // Firebase Config
         const firebaseConfig = {
             apiKey: "AIzaSyD675uBrd8UEsN1bIhHBKN1Htxbax2sT1Q",
@@ -65,6 +67,8 @@
         });
 
         function adicionarComentario() {
+            console.log("Função adicionarComentario chamada!");
+
             let professor = document.getElementById("professor").value;
             let identificado = document.getElementById("identificado").checked;
             let nome = identificado ? document.getElementById("nome").value : "Anônimo";
@@ -90,6 +94,8 @@
         }
 
         function carregarComentarios() {
+            console.log("Carregando comentários...");
+
             let commentsDiv = document.getElementById("comments");
             commentsDiv.innerHTML = "";
 
@@ -105,14 +111,12 @@
             });
         }
 
-        // Associar função ao botão após o DOM carregar
+        // Esperar o DOM carregar antes de associar os eventos
         document.addEventListener("DOMContentLoaded", function() {
             document.getElementById("enviarComentario").addEventListener("click", adicionarComentario);
             carregarComentarios();
         });
+
     </script>
 </body>
 </html>
-
-
-
