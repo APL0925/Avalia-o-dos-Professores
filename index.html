@@ -7,7 +7,8 @@
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; }
         #comments { margin-top: 20px; }
-        .comment-box { border: 1px solid #ccc; padding: 10px; margin: 10px 0; }
+        .comment-box { border: 1px solid #ccc; padding: 10px; margin: 10px 0; position: relative; }
+        .delete-btn { position: absolute; top: 5px; right: 5px; background: red; color: white; border: none; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -34,89 +35,71 @@
     <br><br>
     <textarea id="comentario" rows="4" cols="50" placeholder="Escreva sua opinião..."></textarea>
     <br>
-    <button id="enviarComentario">Enviar Comentário</button>
+    <button onclick="adicionarComentario()">Enviar Comentário</button>
     
     <h2>Comentários:</h2>
     <div id="comments"></div>
 
-    <!-- Firebase SDKs -->
-    <script type="module">
-        console.log("Script carregado!");
-
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getDatabase, ref, push, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
-
-        // Configuração do Firebase
-        const firebaseConfig = {
-            apiKey: "AIzaSyD675uBrd8UEsN1bIhHBKN1Htxbax2sT1Q",
-            authDomain: "professores-b452a.firebaseapp.com",
-            databaseURL: "https://professores-b452a-default-rtdb.firebaseio.com",
-            projectId: "professores-b452a",
-            storageBucket: "professores-b452a.appspot.com",
-            messagingSenderId: "929951612798",
-            appId: "1:929951612798:web:759854c18b22d1eed8fd2f",
-            measurementId: "G-BEV2N47QQQ"
-        };
-
-        // Inicializando Firebase
-        const app = initializeApp(firebaseConfig);
-        const database = getDatabase(app);
+    <script>
+        const criador = "MeuNomeDeUsuario"; // Defina seu nome de usuário aqui
 
         document.getElementById("identificado").addEventListener("change", function() {
             document.getElementById("nome").style.display = this.checked ? "block" : "none";
         });
-
+        
         function adicionarComentario() {
-            console.log("Função adicionarComentario chamada!");
-
             let professor = document.getElementById("professor").value;
             let identificado = document.getElementById("identificado").checked;
             let nome = identificado ? document.getElementById("nome").value : "Anônimo";
             let comentario = document.getElementById("comentario").value;
-
+            
             if (comentario.trim() === "") {
                 alert("Por favor, escreva um comentário.");
                 return;
             }
-
-            // Enviar para o Firebase
-            push(ref(database, "comentarios"), {
-                professor: professor,
-                nome: nome,
-                comentario: comentario
-            }).then(() => {
-                document.getElementById("comentario").value = "";
-                carregarComentarios();
-            }).catch((error) => {
-                console.error("Erro ao salvar comentário:", error);
-                alert("Erro ao salvar comentário. Tente novamente.");
-            });
+            
+            let comentarios = JSON.parse(localStorage.getItem("comentarios")) || [];
+            comentarios.push({ professor, nome, comentario });
+            localStorage.setItem("comentarios", JSON.stringify(comentarios));
+            
+            document.getElementById("comentario").value = "";
+            carregarComentarios();
         }
 
         function carregarComentarios() {
-            console.log("Carregando comentários...");
-
             let commentsDiv = document.getElementById("comments");
             commentsDiv.innerHTML = "";
-
-            onValue(ref(database, "comentarios"), (snapshot) => {
-                commentsDiv.innerHTML = "";
-                snapshot.forEach((childSnapshot) => {
-                    let c = childSnapshot.val();
-                    let div = document.createElement("div");
-                    div.className = "comment-box";
-                    div.innerHTML = `<strong>${c.professor} - ${c.nome}</strong><br>${c.comentario}`;
-                    commentsDiv.appendChild(div);
-                });
+            let comentarios = JSON.parse(localStorage.getItem("comentarios")) || [];
+            
+            comentarios.forEach((c, index) => {
+                let div = document.createElement("div");
+                div.className = "comment-box";
+                div.innerHTML = `<strong>${c.professor} - ${c.nome}</strong><br>${c.comentario}`;
+                
+                let btn = document.createElement("button");
+                btn.className = "delete-btn";
+                btn.innerText = "X";
+                btn.onclick = function() {
+                    if (c.nome === "Anônimo" || c.nome === criador || c.nome === document.getElementById("nome").value) {
+                        deletarComentario(index);
+                    } else {
+                        alert("Você só pode apagar seus próprios comentários!");
+                    }
+                };
+                
+                div.appendChild(btn);
+                commentsDiv.appendChild(div);
             });
         }
-
-        // Esperar o DOM carregar antes de associar os eventos
-        document.addEventListener("DOMContentLoaded", function() {
-            document.getElementById("enviarComentario").addEventListener("click", adicionarComentario);
+        
+        function deletarComentario(index) {
+            let comentarios = JSON.parse(localStorage.getItem("comentarios")) || [];
+            comentarios.splice(index, 1);
+            localStorage.setItem("comentarios", JSON.stringify(comentarios));
             carregarComentarios();
-        });
-
+        }
+        
+        window.onload = carregarComentarios;
     </script>
 </body>
 </html>
