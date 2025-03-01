@@ -9,6 +9,10 @@
         #comments { margin-top: 20px; }
         .comment-box { border: 1px solid #ccc; padding: 10px; margin: 10px 0; }
     </style>
+    
+    <!-- Firebase SDKs -->
+    <script defer src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js"></script>
+    <script defer src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js"></script>
 </head>
 <body>
     <h1>Avaliação de Professores</h1>
@@ -39,72 +43,71 @@
     <h2>Comentários:</h2>
     <div id="comments"></div>
 
-    <!-- Firebase SDK -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, push, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-
-        // 🔥 Configuração do Firebase
+    <script>
+        // Firebase Config
         const firebaseConfig = {
             apiKey: "AIzaSyD675uBrd8UEsN1bIhHBKN1Htxbax2sT1Q",
             authDomain: "professores-b452a.firebaseapp.com",
             databaseURL: "https://professores-b452a-default-rtdb.firebaseio.com",
             projectId: "professores-b452a",
-            storageBucket: "professores-b452a.firebasestorage.app",
+            storageBucket: "professores-b452a.appspot.com",
             messagingSenderId: "929951612798",
             appId: "1:929951612798:web:759854c18b22d1eed8fd2f",
             measurementId: "G-BEV2N47QQQ"
         };
 
-        // Inicializa o Firebase
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
+        // Inicializar Firebase
+        document.addEventListener("DOMContentLoaded", function() {
+            const app = firebase.initializeApp(firebaseConfig);
+            const database = firebase.database();
 
-        // Exibir ou ocultar o campo de nome
-        document.getElementById("identificado").addEventListener("change", function() {
-            document.getElementById("nome").style.display = this.checked ? "block" : "none";
-        });
+            document.getElementById("identificado").addEventListener("change", function() {
+                document.getElementById("nome").style.display = this.checked ? "block" : "none";
+            });
 
-        function adicionarComentario() {
-            let professor = document.getElementById("professor").value;
-            let identificado = document.getElementById("identificado").checked;
-            let nome = identificado ? document.getElementById("nome").value : "Anônimo";
-            let comentario = document.getElementById("comentario").value;
+            function adicionarComentario() {
+                let professor = document.getElementById("professor").value;
+                let identificado = document.getElementById("identificado").checked;
+                let nome = identificado ? document.getElementById("nome").value : "Anônimo";
+                let comentario = document.getElementById("comentario").value;
 
-            if (comentario.trim() === "") {
-                alert("Por favor, escreva um comentário.");
-                return;
+                if (comentario.trim() === "") {
+                    alert("Por favor, escreva um comentário.");
+                    return;
+                }
+
+                // Enviar para o Firebase
+                const novoComentario = database.ref("comentarios").push();
+                novoComentario.set({
+                    professor: professor,
+                    nome: nome,
+                    comentario: comentario
+                });
+
+                document.getElementById("comentario").value = "";
             }
 
-            // Salvar no Firebase
-            const comentariosRef = ref(db, "comentarios/");
-            push(comentariosRef, { professor, nome, comentario });
-
-            document.getElementById("comentario").value = "";
-            alert("Comentário enviado!");
-        }
-
-        function carregarComentarios() {
-            let commentsDiv = document.getElementById("comments");
-            commentsDiv.innerHTML = "";
-
-            // Buscar do Firebase
-            const comentariosRef = ref(db, "comentarios/");
-            onValue(comentariosRef, (snapshot) => {
+            function carregarComentarios() {
+                let commentsDiv = document.getElementById("comments");
                 commentsDiv.innerHTML = "";
-                snapshot.forEach((childSnapshot) => {
-                    const c = childSnapshot.val();
-                    let div = document.createElement("div");
-                    div.className = "comment-box";
-                    div.innerHTML = `<strong>${c.professor} - ${c.nome}</strong><br>${c.comentario}`;
-                    commentsDiv.appendChild(div);
+
+                database.ref("comentarios").on("value", (snapshot) => {
+                    commentsDiv.innerHTML = "";
+                    snapshot.forEach((childSnapshot) => {
+                        let c = childSnapshot.val();
+                        let div = document.createElement("div");
+                        div.className = "comment-box";
+                        div.innerHTML = `<strong>${c.professor} - ${c.nome}</strong><br>${c.comentario}`;
+                        commentsDiv.appendChild(div);
+                    });
                 });
-            });
-        }
+            }
 
-        window.onload = carregarComentarios;
+            window.adicionarComentario = adicionarComentario;
+            carregarComentarios();
+        });
     </script>
-
 </body>
 </html>
+
 
