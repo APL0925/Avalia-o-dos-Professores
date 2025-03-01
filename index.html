@@ -11,8 +11,8 @@
     </style>
     
     <!-- Firebase SDKs -->
-    <script defer src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js"></script>
-    <script defer src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js"></script>
 </head>
 <body>
     <h1>Avaliação de Professores</h1>
@@ -38,7 +38,7 @@
     <br><br>
     <textarea id="comentario" rows="4" cols="50" placeholder="Escreva sua opinião..."></textarea>
     <br>
-    <button onclick="adicionarComentario()">Enviar Comentário</button>
+    <button id="enviarComentario">Enviar Comentário</button>
     
     <h2>Comentários:</h2>
     <div id="comments"></div>
@@ -57,57 +57,62 @@
         };
 
         // Inicializar Firebase
-        document.addEventListener("DOMContentLoaded", function() {
-            const app = firebase.initializeApp(firebaseConfig);
-            const database = firebase.database();
+        const app = firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
 
-            document.getElementById("identificado").addEventListener("change", function() {
-                document.getElementById("nome").style.display = this.checked ? "block" : "none";
-            });
+        document.getElementById("identificado").addEventListener("change", function() {
+            document.getElementById("nome").style.display = this.checked ? "block" : "none";
+        });
 
-            function adicionarComentario() {
-                let professor = document.getElementById("professor").value;
-                let identificado = document.getElementById("identificado").checked;
-                let nome = identificado ? document.getElementById("nome").value : "Anônimo";
-                let comentario = document.getElementById("comentario").value;
+        function adicionarComentario() {
+            let professor = document.getElementById("professor").value;
+            let identificado = document.getElementById("identificado").checked;
+            let nome = identificado ? document.getElementById("nome").value : "Anônimo";
+            let comentario = document.getElementById("comentario").value;
 
-                if (comentario.trim() === "") {
-                    alert("Por favor, escreva um comentário.");
-                    return;
-                }
+            if (comentario.trim() === "") {
+                alert("Por favor, escreva um comentário.");
+                return;
+            }
 
-                // Enviar para o Firebase
-                const novoComentario = database.ref("comentarios").push();
-                novoComentario.set({
-                    professor: professor,
-                    nome: nome,
-                    comentario: comentario
-                });
-
+            // Enviar para o Firebase
+            database.ref("comentarios").push({
+                professor: professor,
+                nome: nome,
+                comentario: comentario
+            }).then(() => {
                 document.getElementById("comentario").value = "";
-            }
+                carregarComentarios();
+            }).catch((error) => {
+                console.error("Erro ao salvar comentário:", error);
+                alert("Erro ao salvar comentário. Tente novamente.");
+            });
+        }
 
-            function carregarComentarios() {
-                let commentsDiv = document.getElementById("comments");
+        function carregarComentarios() {
+            let commentsDiv = document.getElementById("comments");
+            commentsDiv.innerHTML = "";
+
+            database.ref("comentarios").on("value", (snapshot) => {
                 commentsDiv.innerHTML = "";
-
-                database.ref("comentarios").on("value", (snapshot) => {
-                    commentsDiv.innerHTML = "";
-                    snapshot.forEach((childSnapshot) => {
-                        let c = childSnapshot.val();
-                        let div = document.createElement("div");
-                        div.className = "comment-box";
-                        div.innerHTML = `<strong>${c.professor} - ${c.nome}</strong><br>${c.comentario}`;
-                        commentsDiv.appendChild(div);
-                    });
+                snapshot.forEach((childSnapshot) => {
+                    let c = childSnapshot.val();
+                    let div = document.createElement("div");
+                    div.className = "comment-box";
+                    div.innerHTML = `<strong>${c.professor} - ${c.nome}</strong><br>${c.comentario}`;
+                    commentsDiv.appendChild(div);
                 });
-            }
+            });
+        }
 
-            window.adicionarComentario = adicionarComentario;
+        // Associar função ao botão após o DOM carregar
+        document.addEventListener("DOMContentLoaded", function() {
+            document.getElementById("enviarComentario").addEventListener("click", adicionarComentario);
             carregarComentarios();
         });
     </script>
 </body>
 </html>
+
 
 
