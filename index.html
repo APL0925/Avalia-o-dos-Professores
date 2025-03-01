@@ -8,11 +8,12 @@
         body { font-family: Arial, sans-serif; margin: 20px; }
         #comments { margin-top: 20px; }
         .comment-box { border: 1px solid #ccc; padding: 10px; margin: 10px 0; position: relative; }
-        .delete-btn { position: absolute; top: 5px; right: 5px; background: red; color: white; border: none; cursor: pointer; }
+        .delete-btn { position: absolute; top: 5px; right: 5px; background: red; color: white; border: none; cursor: pointer; padding: 5px; }
     </style>
 </head>
 <body>
     <h1>Avaliação de Professores</h1>
+    
     <label for="professor">Escolha um professor:</label>
     <select id="professor">
         <option>André</option>
@@ -28,11 +29,14 @@
         <option>Izaias</option>
         <option>Alberes</option>
     </select>
+    
     <br><br>
+    
     <label><input type="checkbox" id="identificado"> Deseja ser identificado?</label>
     <br>
     <input type="text" id="nome" placeholder="Seu nome" style="display:none;">
     <br><br>
+    
     <textarea id="comentario" rows="4" cols="50" placeholder="Escreva sua opinião..."></textarea>
     <br>
     <button onclick="adicionarComentario()">Enviar Comentário</button>
@@ -45,7 +49,7 @@
             document.getElementById("nome").style.display = this.checked ? "block" : "none";
         });
 
-        const CRIADOR_SITE = "Admin"; // Defina o nome do criador do site aqui
+        const CRIADOR_SITE = "Admin"; // Defina seu nome como administrador aqui
 
         function adicionarComentario() {
             let professor = document.getElementById("professor").value;
@@ -80,21 +84,24 @@
                 let botaoExcluir = document.createElement("button");
                 botaoExcluir.className = "delete-btn";
                 botaoExcluir.innerText = "Excluir";
-                botaoExcluir.onclick = function() { excluirComentario(c.id); };
+                botaoExcluir.onclick = function() { excluirComentario(c.id, c.nome); };
 
                 div.appendChild(botaoExcluir);
                 commentsDiv.appendChild(div);
             });
         }
 
-        function excluirComentario(id) {
-            let comentarios = JSON.parse(localStorage.getItem("comentarios")) || [];
+        function excluirComentario(id, autor) {
             let usuarioAtual = prompt("Digite seu nome para confirmar a exclusão:");
 
-            comentarios = comentarios.filter(c => c.id !== id && (c.nome === usuarioAtual || usuarioAtual === CRIADOR_SITE));
-
-            localStorage.setItem("comentarios", JSON.stringify(comentarios));
-            carregarComentarios();
+            if (usuarioAtual === CRIADOR_SITE || usuarioAtual === autor) {
+                let comentarios = JSON.parse(localStorage.getItem("comentarios")) || [];
+                comentarios = comentarios.filter(c => c.id !== id);
+                localStorage.setItem("comentarios", JSON.stringify(comentarios));
+                carregarComentarios();
+            } else {
+                alert("Você não tem permissão para excluir este comentário.");
+            }
         }
 
         window.onload = carregarComentarios;
