@@ -9,10 +9,6 @@
         #comments { margin-top: 20px; }
         .comment-box { border: 1px solid #ccc; padding: 10px; margin: 10px 0; }
     </style>
-    
-    <!-- Firebase SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js"></script>
 </head>
 <body>
     <h1>Avaliação de Professores</h1>
@@ -43,10 +39,15 @@
     <h2>Comentários:</h2>
     <div id="comments"></div>
 
-    <script>
+    <!-- Firebase SDKs -->
+    <script type="module">
         console.log("Script carregado!");
 
-        // Firebase Config
+        // Importando Firebase corretamente
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, push, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        // Configuração do Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyD675uBrd8UEsN1bIhHBKN1Htxbax2sT1Q",
             authDomain: "professores-b452a.firebaseapp.com",
@@ -58,9 +59,9 @@
             measurementId: "G-BEV2N47QQQ"
         };
 
-        // Inicializar Firebase
-        const app = firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
+        // Inicializando Firebase
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
 
         document.getElementById("identificado").addEventListener("change", function() {
             document.getElementById("nome").style.display = this.checked ? "block" : "none";
@@ -80,7 +81,7 @@
             }
 
             // Enviar para o Firebase
-            database.ref("comentarios").push({
+            push(ref(database, "comentarios"), {
                 professor: professor,
                 nome: nome,
                 comentario: comentario
@@ -99,7 +100,7 @@
             let commentsDiv = document.getElementById("comments");
             commentsDiv.innerHTML = "";
 
-            database.ref("comentarios").on("value", (snapshot) => {
+            onValue(ref(database, "comentarios"), (snapshot) => {
                 commentsDiv.innerHTML = "";
                 snapshot.forEach((childSnapshot) => {
                     let c = childSnapshot.val();
