@@ -8,7 +8,7 @@
         body { font-family: Arial, sans-serif; margin: 20px; }
         #comments { margin-top: 20px; }
         .comment-box { border: 1px solid #ccc; padding: 10px; margin: 10px 0; position: relative; }
-        .delete-btn { position: absolute; top: 5px; right: 5px; background: red; color: white; border: none; cursor: pointer; padding: 5px; }
+        .delete-btn { position: absolute; top: 5px; right: 5px; background: red; color: white; border: none; cursor: pointer; padding: 5px; display: none; }
     </style>
 </head>
 <body>
@@ -49,7 +49,7 @@
             document.getElementById("nome").style.display = this.checked ? "block" : "none";
         });
 
-        const CRIADOR_SITE = "Admin"; // Defina seu nome como administrador aqui
+        const CRIADOR_SITE = "Admin"; // Nome do admin
 
         function adicionarComentario() {
             let professor = document.getElementById("professor").value;
@@ -63,8 +63,11 @@
             }
 
             let comentarios = JSON.parse(localStorage.getItem("comentarios")) || [];
-            let id = new Date().getTime(); // Gera um ID único para cada comentário
-            comentarios.push({ id, professor, nome, comentario });
+            let id = new Date().getTime(); // ID único
+            let usuarioAtual = localStorage.getItem("usuarioAtual") || nome; // Salva o nome do usuário
+            localStorage.setItem("usuarioAtual", usuarioAtual);
+
+            comentarios.push({ id, professor, nome: usuarioAtual, comentario });
             localStorage.setItem("comentarios", JSON.stringify(comentarios));
 
             document.getElementById("comentario").value = "";
@@ -75,7 +78,8 @@
             let commentsDiv = document.getElementById("comments");
             commentsDiv.innerHTML = "";
             let comentarios = JSON.parse(localStorage.getItem("comentarios")) || [];
-            
+            let usuarioAtual = localStorage.getItem("usuarioAtual");
+
             comentarios.forEach(c => {
                 let div = document.createElement("div");
                 div.className = "comment-box";
@@ -84,24 +88,23 @@
                 let botaoExcluir = document.createElement("button");
                 botaoExcluir.className = "delete-btn";
                 botaoExcluir.innerText = "Excluir";
-                botaoExcluir.onclick = function() { excluirComentario(c.id, c.nome); };
+                botaoExcluir.onclick = function() { excluirComentario(c.id); };
+
+                // Exibe o botão apenas se for o dono do comentário ou o Admin
+                if (usuarioAtual === c.nome || usuarioAtual === CRIADOR_SITE) {
+                    botaoExcluir.style.display = "block";
+                }
 
                 div.appendChild(botaoExcluir);
                 commentsDiv.appendChild(div);
             });
         }
 
-        function excluirComentario(id, autor) {
-            let usuarioAtual = prompt("Digite seu nome para confirmar a exclusão:");
-
-            if (usuarioAtual === CRIADOR_SITE || usuarioAtual === autor) {
-                let comentarios = JSON.parse(localStorage.getItem("comentarios")) || [];
-                let novoArray = comentarios.filter(c => c.id !== id); // Remove apenas o comentário específico
-                localStorage.setItem("comentarios", JSON.stringify(novoArray));
-                carregarComentarios();
-            } else {
-                alert("Você não tem permissão para excluir este comentário.");
-            }
+        function excluirComentario(id) {
+            let comentarios = JSON.parse(localStorage.getItem("comentarios")) || [];
+            let novoArray = comentarios.filter(c => c.id !== id);
+            localStorage.setItem("comentarios", JSON.stringify(novoArray));
+            carregarComentarios();
         }
 
         window.onload = carregarComentarios;
