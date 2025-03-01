@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Avaliação de Professores</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        #comments { margin-top: 20px; }
+        .comment-box { border: 1px solid #ccc; padding: 10px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>Avaliação de Professores</h1>
+    <label for="professor">Escolha um professor:</label>
+    <select id="professor">
+        <option>André</option>
+        <option>Débora</option>
+        <option>Vítor</option>
+        <option>Silvânia</option>
+        <option>Oliveira Santos</option>
+        <option>Ribamar</option>
+        <option>Kelma</option>
+        <option>Júnior</option>
+        <option>Lorenzo</option>
+        <option>Onilma</option>
+        <option>Izaias</option>
+        <option>Alberes</option>
+    </select>
+    <br><br>
+    <label><input type="checkbox" id="identificado"> Deseja ser identificado?</label>
+    <br>
+    <input type="text" id="nome" placeholder="Seu nome" style="display:none;">
+    <br><br>
+    <textarea id="comentario" rows="4" cols="50" placeholder="Escreva sua opinião..."></textarea>
+    <br>
+    <button onclick="adicionarComentario()">Enviar Comentário</button>
+    
+    <h2>Comentários:</h2>
+    <div id="comments"></div>
+
+    <script>
+        document.getElementById("identificado").addEventListener("change", function() {
+            document.getElementById("nome").style.display = this.checked ? "block" : "none";
+        });
+        
+        function adicionarComentario() {
+            let professor = document.getElementById("professor").value;
+            let identificado = document.getElementById("identificado").checked;
+            let nome = identificado ? document.getElementById("nome").value : "Anônimo";
+            let comentario = document.getElementById("comentario").value;
+            
+            if (comentario.trim() === "") {
+                alert("Por favor, escreva um comentário.");
+                return;
+            }
+            
+            let comentarios = JSON.parse(localStorage.getItem("comentarios")) || [];
+            comentarios.push({ professor, nome, comentario });
+            localStorage.setItem("comentarios", JSON.stringify(comentarios));
+            
+            document.getElementById("comentario").value = "";
+            carregarComentarios();
+        }
+
+        function carregarComentarios() {
+            let commentsDiv = document.getElementById("comments");
+            commentsDiv.innerHTML = "";
+            let comentarios = JSON.parse(localStorage.getItem("comentarios")) || [];
+            
+            comentarios.forEach(c => {
+                let div = document.createElement("div");
+                div.className = "comment-box";
+                div.innerHTML = `<strong>${c.professor} - ${c.nome}</strong><br>${c.comentario}`;
+                commentsDiv.appendChild(div);
+            });
+        }
+
+        window.onload = carregarComentarios;
+    </script>
+</body>
+</html>
