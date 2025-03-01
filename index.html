@@ -96,8 +96,8 @@
 
             if (usuarioAtual === CRIADOR_SITE || usuarioAtual === autor) {
                 let comentarios = JSON.parse(localStorage.getItem("comentarios")) || [];
-                comentarios = comentarios.filter(c => c.id !== id);
-                localStorage.setItem("comentarios", JSON.stringify(comentarios));
+                let novoArray = comentarios.filter(c => c.id !== id); // Remove apenas o comentário específico
+                localStorage.setItem("comentarios", JSON.stringify(novoArray));
                 carregarComentarios();
             } else {
                 alert("Você não tem permissão para excluir este comentário.");
