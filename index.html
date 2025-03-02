@@ -7,7 +7,8 @@
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; }
         #comments { margin-top: 20px; }
-        .comment-box { border: 1px solid #ccc; padding: 10px; margin: 10px 0; }
+        .comment-box { border: 1px solid #ccc; padding: 10px; margin: 10px 0; position: relative; }
+        .delete-btn { position: absolute; top: 5px; right: 5px; background: red; color: white; border: none; cursor: pointer; padding: 5px; display: none; }
     </style>
 </head>
 <body>
@@ -44,7 +45,7 @@
         console.log("Script carregado!");
 
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getDatabase, ref, push, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+        import { getDatabase, ref, push, onValue, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
         // Configuração do Firebase
         const firebaseConfig = {
@@ -58,9 +59,12 @@
             measurementId: "G-BEV2N47QQQ"
         };
 
-        // Inicializando Firebase
+        // 🔥 Inicializa Firebase
         const app = initializeApp(firebaseConfig);
         const database = getDatabase(app);
+
+        // 🔑 Defina o nome do criador do site (seu nome)
+        const CRIADOR_SITE = "Admin"; // Troque "Admin" pelo seu nome real
 
         document.getElementById("identificado").addEventListener("change", function() {
             document.getElementById("nome").style.display = this.checked ? "block" : "none";
@@ -79,7 +83,7 @@
                 return;
             }
 
-            // Enviar para o Firebase
+            // Enviar para Firebase
             push(ref(database, "comentarios"), {
                 professor: professor,
                 nome: nome,
@@ -102,13 +106,41 @@
             onValue(ref(database, "comentarios"), (snapshot) => {
                 commentsDiv.innerHTML = "";
                 snapshot.forEach((childSnapshot) => {
+                    let commentID = childSnapshot.key; // ID do comentário
                     let c = childSnapshot.val();
+
                     let div = document.createElement("div");
                     div.className = "comment-box";
                     div.innerHTML = `<strong>${c.professor} - ${c.nome}</strong><br>${c.comentario}`;
+
+                    // Criar botão de exclusão (visível apenas para o criador)
+                    let botaoExcluir = document.createElement("button");
+                    botaoExcluir.className = "delete-btn";
+                    botaoExcluir.innerText = "Excluir";
+                    botaoExcluir.onclick = function() { excluirComentario(commentID); };
+
+                    // ⚡ Exibe o botão apenas para o criador
+                    if (CRIADOR_SITE === "Admin") {  // Troque "Admin" pelo seu nome
+                        botaoExcluir.style.display = "block";
+                    }
+
+                    div.appendChild(botaoExcluir);
                     commentsDiv.appendChild(div);
                 });
             });
+        }
+
+        function excluirComentario(id) {
+            // Confirmação antes de excluir
+            if (confirm("Tem certeza que deseja excluir este comentário?")) {
+                remove(ref(database, "comentarios/" + id)).then(() => {
+                    alert("Comentário excluído com sucesso!");
+                    carregarComentarios();
+                }).catch((error) => {
+                    console.error("Erro ao excluir comentário:", error);
+                    alert("Erro ao excluir comentário. Tente novamente.");
+                });
+            }
         }
 
         // Esperar o DOM carregar antes de associar os eventos
