@@ -4,9 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Avaliação de Professores</title>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; }
-        #comments { margin-top: 20px; }
         .comment-box { border: 1px solid #ccc; padding: 10px; margin: 10px 0; position: relative; }
         .delete-btn { position: absolute; top: 5px; right: 5px; background: red; color: white; border: none; cursor: pointer; padding: 5px; display: none; }
     </style>
@@ -45,66 +46,84 @@
     <div id="comments"></div>
 
     <script>
+        // 🔥 Configuração do Firebase (substitua com suas credenciais)
+        const firebaseConfig = {
+            apiKey: "SUA_API_KEY",
+            authDomain: "SEU_AUTH_DOMAIN",
+            databaseURL: "SEU_DATABASE_URL",
+            projectId: "SEU_PROJECT_ID",
+            storageBucket: "SEU_STORAGE_BUCKET",
+            messagingSenderId: "SEU_MESSAGING_SENDER_ID",
+            appId: "SEU_APP_ID"
+        };
+
+        // 🔥 Inicializa Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        const CRIADOR_SITE = "Admin"; // Nome do admin
+
         document.getElementById("identificado").addEventListener("change", function() {
             document.getElementById("nome").style.display = this.checked ? "block" : "none";
         });
-
-        const CRIADOR_SITE = "Admin"; // Nome do admin
 
         function adicionarComentario() {
             let professor = document.getElementById("professor").value;
             let identificado = document.getElementById("identificado").checked;
             let nome = identificado ? document.getElementById("nome").value : "Anônimo";
             let comentario = document.getElementById("comentario").value;
-            
+
             if (comentario.trim() === "") {
                 alert("Por favor, escreva um comentário.");
                 return;
             }
 
-            let comentarios = JSON.parse(localStorage.getItem("comentarios")) || [];
-            let id = new Date().getTime(); // ID único
-            let usuarioAtual = localStorage.getItem("usuarioAtual") || nome; // Salva o nome do usuário
-            localStorage.setItem("usuarioAtual", usuarioAtual);
+            let novoComentario = {
+                nome: nome,
+                professor: professor,
+                comentario: comentario,
+                timestamp: Date.now() // Para ordenar os comentários depois
+            };
 
-            comentarios.push({ id, professor, nome: usuarioAtual, comentario });
-            localStorage.setItem("comentarios", JSON.stringify(comentarios));
-
+            // 🔥 Envia para Firebase
+            db.ref("comentarios").push(novoComentario);
             document.getElementById("comentario").value = "";
-            carregarComentarios();
         }
 
         function carregarComentarios() {
             let commentsDiv = document.getElementById("comments");
             commentsDiv.innerHTML = "";
-            let comentarios = JSON.parse(localStorage.getItem("comentarios")) || [];
-            let usuarioAtual = localStorage.getItem("usuarioAtual");
 
-            comentarios.forEach(c => {
-                let div = document.createElement("div");
-                div.className = "comment-box";
-                div.innerHTML = `<strong>${c.professor} - ${c.nome}</strong><br>${c.comentario}`;
+            db.ref("comentarios").on("value", function(snapshot) {
+                commentsDiv.innerHTML = "";
+                snapshot.forEach(function(childSnapshot) {
+                    let key = childSnapshot.key; // ID do comentário
+                    let c = childSnapshot.val();
 
-                let botaoExcluir = document.createElement("button");
-                botaoExcluir.className = "delete-btn";
-                botaoExcluir.innerText = "Excluir";
-                botaoExcluir.onclick = function() { excluirComentario(c.id); };
+                    let div = document.createElement("div");
+                    div.className = "comment-box";
+                    div.innerHTML = `<strong>${c.professor} - ${c.nome}</strong><br>${c.comentario}`;
 
-                // Exibe o botão apenas se for o dono do comentário ou o Admin
-                if (usuarioAtual === c.nome || usuarioAtual === CRIADOR_SITE) {
-                    botaoExcluir.style.display = "block";
-                }
+                    let botaoExcluir = document.createElement("button");
+                    botaoExcluir.className = "delete-btn";
+                    botaoExcluir.innerText = "Excluir";
+                    botaoExcluir.onclick = function() { excluirComentario(key); };
 
-                div.appendChild(botaoExcluir);
-                commentsDiv.appendChild(div);
+                    let usuarioAtual = localStorage.getItem("usuarioAtual") || "Anônimo";
+
+                    // Exibe o botão se o usuário for o dono ou o admin
+                    if (usuarioAtual === c.nome || usuarioAtual === CRIADOR_SITE) {
+                        botaoExcluir.style.display = "block";
+                    }
+
+                    div.appendChild(botaoExcluir);
+                    commentsDiv.appendChild(div);
+                });
             });
         }
 
         function excluirComentario(id) {
-            let comentarios = JSON.parse(localStorage.getItem("comentarios")) || [];
-            let novoArray = comentarios.filter(c => c.id !== id);
-            localStorage.setItem("comentarios", JSON.stringify(novoArray));
-            carregarComentarios();
+            db.ref("comentarios/" + id).remove();
         }
 
         window.onload = carregarComentarios;
